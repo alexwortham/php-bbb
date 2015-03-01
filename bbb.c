@@ -42,6 +42,7 @@ const zend_function_entry bbb_functions[] = {
 	PHP_FE(confirm_bbb_compiled,	NULL)		/* For testing, remove later. */
 	PHP_FE(setup_adc,		NULL)
 	PHP_FE(adc_read_value,		NULL)
+	PHP_FE(adc_read_raw,		NULL)
 	PHP_FE(adc_cleanup,		NULL)
 	PHP_FE(i2c_open,		NULL)
 	PHP_FE(i2c_close,		NULL)
@@ -226,6 +227,34 @@ PHP_FUNCTION(adc_read_value)
 
 	//scale modifier
 	value = value / 1800.0;
+
+	RETURN_DOUBLE((double) value);
+}
+
+PHP_FUNCTION(adc_read_raw)
+{
+	unsigned int ain;
+	float value;
+	int success, arg_len;
+	long channel;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &channel) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	// check setup was called prior
+	if (!BBB_G(adc)->adc_initialized)
+	{
+		RETURN_STRING("ADC has not been initialized.  You must call setup_adc() before calling read.", 1);
+	}    
+
+	if (channel < 0 || channel > 6) {
+		RETURN_STRING("Invalid AIN key or name.", 1);
+	}
+
+	if (ADC_read_value(BBB_G(adc), (unsigned int) channel, &value) == NULL) {
+		RETURN_STRING("Error while reading AIN port. Invalid or locked AIN file.", 1);
+	}
 
 	RETURN_DOUBLE((double) value);
 }

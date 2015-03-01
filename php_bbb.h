@@ -52,6 +52,7 @@ PHP_FUNCTION(confirm_bbb_compiled);	/* For testing, remove later. */
 // Analog functions
 PHP_FUNCTION(setup_adc);
 PHP_FUNCTION(adc_read_value);
+PHP_FUNCTION(adc_read_raw);
 PHP_FUNCTION(adc_cleanup);
 // I2C functions
 PHP_FUNCTION(i2c_open);
