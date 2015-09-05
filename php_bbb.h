@@ -57,7 +57,13 @@ PHP_FUNCTION(adc_read_value);
 ZEND_BEGIN_MODULE_GLOBALS(bbb)
 	int	is_adc_initialized;
 	int	is_pwm_initialized;
+	int	gpio_mode;
+	int	gpio_direction[120];
+	int	setup_error;
+	int	module_setup;
 	char	adc_prefix_dir[40];
+	char	ctrl_dir[35];
+	char	ocp_dir[25];
 ZEND_END_MODULE_GLOBALS(bbb)
 
 /* In every utility function you add that needs to use variables 

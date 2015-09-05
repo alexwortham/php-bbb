@@ -35,8 +35,6 @@ SOFTWARE.
 #define PERIOD 0
 #define DUTY 1
 
-int pwm_initialized = 0;
-
 // pwm exports
 struct pwm_exp
 {
@@ -67,9 +65,9 @@ struct pwm_exp *lookup_exported_pwm(const char *key)
 
 int initialize_pwm(void)
 {
-    if  (!pwm_initialized && load_device_tree("am33xx_pwm")) {
-        build_path("/sys/devices", "ocp", ocp_dir, sizeof(ocp_dir));
-        pwm_initialized = 1;
+    if  (!BBB_G(pwm_initialized) && load_device_tree("am33xx_pwm")) {
+        build_path("/sys/devices", "ocp", BBB_G(ocp_dir), sizeof(BBB_G(ocp_dir)));
+        BBB_G(pwm_initialized) = 1;
         return 1;
     }
 
@@ -153,7 +151,7 @@ int pwm_start(const char *key, float duty, float freq, int polarity)
     int period_fd, duty_fd, polarity_fd;
     struct pwm_exp *new_pwm, *pwm;
 
-    if(!pwm_initialized) {
+    if(!BBB_G(pwm_initialized)) {
         initialize_pwm();
     }
 
@@ -169,7 +167,7 @@ int pwm_start(const char *key, float duty, float freq, int polarity)
     snprintf(pwm_test_fragment, sizeof(pwm_test_fragment), "pwm_test_%s", key);
 
     //finds and builds the pwm_test_path, as it can be variable...
-    build_path(ocp_dir, pwm_test_fragment, pwm_test_path, sizeof(pwm_test_path));
+    build_path(BBB_G(ocp_dir), pwm_test_fragment, pwm_test_path, sizeof(pwm_test_path));
 
     //create the path for the period and duty
     snprintf(period_path, sizeof(period_path), "%s/period", pwm_test_path);

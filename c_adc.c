@@ -30,25 +30,21 @@ SOFTWARE.
 #include "c_adc.h"
 #include "common.h"
 
-char adc_prefix_dir[40];
-
-int adc_initialized = 0;
-
 int initialize_adc(void)
 {
     char test_path[40];
     FILE *fh;
-    if (adc_initialized) {
+    if (BBB_G(adc_initialized)) {
         return 1;
     }
 
     if (load_device_tree("cape-bone-iio")) {
-        build_path("/sys/devices", "ocp.", ocp_dir, sizeof(ocp_dir));
-        build_path(ocp_dir, "helper.", adc_prefix_dir, sizeof(adc_prefix_dir));
-        strncat(adc_prefix_dir, "/AIN", sizeof(adc_prefix_dir));
+        build_path("/sys/devices", "ocp.", BBB_G(ocp_dir), sizeof(BBB_G(ocp_dir)));
+        build_path(BBB_G(ocp_dir), "helper.", BBB_G(adc_prefix_dir), sizeof(BBB_G(adc_prefix_dir)));
+        strncat(BBB_G(adc_prefix_dir), "/AIN", sizeof(BBB_G(adc_prefix_dir)));
 
         // Test that the directory has an AIN entry (found correct devicetree)
-        snprintf(test_path, sizeof(test_path), "%s%d", adc_prefix_dir, 0);
+        snprintf(test_path, sizeof(test_path), "%s%d", BBB_G(adc_prefix_dir), 0);
         
         fh = fopen(test_path, "r");
 
@@ -57,7 +53,7 @@ int initialize_adc(void)
         }
         fclose(fh);
 
-        adc_initialized = 1;
+        BBB_G(adc_initialized) = 1;
         return 1;
     }
 
@@ -70,7 +66,7 @@ int read_value(unsigned int ain, float *value)
     char ain_path[40];
     int err, try_count=0;
     int read_successful;
-    snprintf(ain_path, sizeof(ain_path), "%s%d", adc_prefix_dir, ain);
+    snprintf(ain_path, sizeof(ain_path), "%s%d", BBB_G(adc_prefix_dir), ain);
     
     read_successful = 0;
 

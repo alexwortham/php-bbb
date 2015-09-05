@@ -9,3 +9,9 @@
 *.swp
 *~
 autom4te.cache/
+Makefile
+Makefile.fragments
+Makefile.objects
+config.log
+config.status
+libtool

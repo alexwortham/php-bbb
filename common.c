@@ -33,9 +33,6 @@ SOFTWARE.
 #include <time.h>
 #include "common.h"
 
-int setup_error = 0;
-int module_setup = 0;
-
 typedef struct pins_t { 
     const char *name; 
     const char *key; 

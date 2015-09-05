@@ -85,18 +85,22 @@ PHP_INI_END()
 /* {{{ php_bbb_init_globals
  */
 /* Uncomment this function if you have INI entries
+*/
 static void php_bbb_init_globals(zend_bbb_globals *bbb_globals)
 {
-	bbb_globals->global_value = 0;
-	bbb_globals->global_string = NULL;
+	bbb_globals->is_adc_initialized = 0;
+	bbb_globals->is_pwm_initialized = 0;
+	bbb_globals->setup_error = 0;
+	bbb_globals->module_setup = 0;
 }
-*/
 /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION
  */
 PHP_MINIT_FUNCTION(bbb)
 {
+	ZEND_INIT_MODULE_GLOBALS(bbb, php_bbb_init_globals,
+NULL);
 	/* If you have INI entries, uncomment these lines 
 	REGISTER_INI_ENTRIES();
 	*/

@@ -35,12 +35,7 @@ SOFTWARE.
 #define ARRAY_SIZE(a)  (sizeof(a) / sizeof(a[0]))
 
 #define FILENAME_BUFFER_SIZE 128
-
-int gpio_mode;
-int gpio_direction[120];
-
-char ctrl_dir[35];
-char ocp_dir[25];
+#include "php_bbb.h"
 
 int get_gpio_number(const char *key, unsigned int *gpio);
 int get_pwm_key(const char *input, char *key);
