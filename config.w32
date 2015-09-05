@@ -1,0 +1,13 @@
+// $Id$
+// vim:ft=javascript
+
+// If your extension references something external, use ARG_WITH
+// ARG_WITH("bbb", "for bbb support", "no");
+
+// Otherwise, use ARG_ENABLE
+// ARG_ENABLE("bbb", "enable bbb support", "no");
+
+if (PHP_BBB != "no") {
+	EXTENSION("bbb", "bbb.c");
+}
+

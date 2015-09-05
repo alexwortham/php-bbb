@@ -1,0 +1,11 @@
+*.gcno
+*.gcda
+*.lo
+*.o
+*.la
+*.a
+*.so
+.libs/
+*.swp
+*~
+autom4te.cache/
