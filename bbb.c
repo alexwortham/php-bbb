@@ -27,6 +27,7 @@
 #include "ext/standard/info.h"
 #include "php_bbb.h"
 #include "c_adc.h"
+#include "i2clib.h"
 
 /* If you declare any globals in php_bbb.h uncomment this:
 */

@@ -15,3 +15,4 @@ Makefile.objects
 config.log
 config.status
 libtool
+i2c-tools-3.1.0/
