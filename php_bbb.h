@@ -38,6 +38,8 @@ extern zend_module_entry bbb_module_entry;
 #include "TSRM.h"
 #endif
 
+#include "i2clib.h"
+
 PHP_MINIT_FUNCTION(bbb);
 PHP_MSHUTDOWN_FUNCTION(bbb);
 PHP_RINIT_FUNCTION(bbb);
@@ -45,8 +47,21 @@ PHP_RSHUTDOWN_FUNCTION(bbb);
 PHP_MINFO_FUNCTION(bbb);
 
 PHP_FUNCTION(confirm_bbb_compiled);	/* For testing, remove later. */
+// Analog functions
 PHP_FUNCTION(setup_adc);
 PHP_FUNCTION(adc_read_value);
+PHP_FUNCTION(adc_cleanup);
+// I2C functions
+PHP_FUNCTION(i2c_open);
+PHP_FUNCTION(i2c_close);
+PHP_FUNCTION(i2c_write_quick);
+PHP_FUNCTION(i2c_read_byte);
+PHP_FUNCTION(i2c_write_byte);
+PHP_FUNCTION(i2c_read_byte_data);
+PHP_FUNCTION(i2c_write_byte_data);
+PHP_FUNCTION(i2c_read_word_data);
+PHP_FUNCTION(i2c_write_word_data);
+PHP_FUNCTION(i2c_get_last_error);
 //PHP_FUNCTION(adc_read_raw);
 
 /* 
@@ -64,6 +79,7 @@ ZEND_BEGIN_MODULE_GLOBALS(bbb)
 	char	adc_prefix_dir[40];
 	char	ctrl_dir[35];
 	char	ocp_dir[25];
+	SMBus	*smbus;
 ZEND_END_MODULE_GLOBALS(bbb)
 
 /* In every utility function you add that needs to use variables 

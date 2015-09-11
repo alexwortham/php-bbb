@@ -155,12 +155,19 @@ SMBus_close(SMBus *self)
 	SMBus_SUCCESS(self);
 }
 
-static void
+/*
+ * Unlike all other functions, a NULL return value indicates success.
+*/
+static SMBus *
 SMBus_dealloc(SMBus *self)
 {
-	SMBus_close(self);
+	if (SMBus_close(self) == NULL) {
+		return self;
+	}
 
 	free(self);
+
+	return NULL;
 }
 
 #define MAXPATH 16
@@ -176,7 +183,7 @@ SMBus_open(SMBus *self, int bus)
 	}
 
 	if ((self->fd = open(path, O_RDWR, 0)) == -1) {
-		snprintf(self->last_error, MAX_ERR_LEN, "Could not open i2c device %s\n");
+		snprintf(self->last_error, MAX_ERR_LEN, "Could not open i2c device %s\n", path);
 		return NULL;
 	}
 

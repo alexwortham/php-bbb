@@ -27,7 +27,6 @@
 #include "ext/standard/info.h"
 #include "php_bbb.h"
 #include "c_adc.h"
-#include "i2clib.h"
 
 /* If you declare any globals in php_bbb.h uncomment this:
 */
@@ -42,8 +41,19 @@ static int le_bbb;
  */
 const zend_function_entry bbb_functions[] = {
 	PHP_FE(confirm_bbb_compiled,	NULL)		/* For testing, remove later. */
-	PHP_FE(setup_adc,	NULL)
-	PHP_FE(adc_read_value,	NULL)
+	PHP_FE(setup_adc,		NULL)
+	PHP_FE(adc_read_value,		NULL)
+	PHP_FE(adc_cleanup,		NULL)
+	PHP_FE(i2c_open,		NULL)
+	PHP_FE(i2c_close,		NULL)
+	PHP_FE(i2c_write_quick,		NULL)
+	PHP_FE(i2c_read_byte,		NULL)
+	PHP_FE(i2c_write_byte,		NULL)
+	PHP_FE(i2c_read_byte_data,	NULL)
+	PHP_FE(i2c_write_byte_data,	NULL)
+	PHP_FE(i2c_read_word_data,	NULL)
+	PHP_FE(i2c_write_word_data,	NULL)
+	PHP_FE(i2c_get_last_error,	NULL)
 	//PHP_FE(adc_read_raw,	NULL)
 	PHP_FE_END	/* Must be the last line in bbb_functions[] */
 };
@@ -189,32 +199,207 @@ PHP_FUNCTION(adc_read_value)
 	char *channel = NULL;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &channel, &arg_len) == FAILURE) {
-		return;
+		RETURN_NULL();
 	}
 
 	// check setup was called prior
 	if (!adc_initialized)
 	{
-	    //PyErr_SetString(PyExc_RuntimeError, "You must setup() ADC prior to calling read.");
-	    return;
+		RETURN_STRING("ADC has not been initialized.  You must call setup_adc() before calling read.", 1);
 	}    
 
 	if (!get_adc_ain(channel, &ain)) {
-	    //PyErr_SetString(PyExc_ValueError, "Invalid AIN key or name.");
-	    return;    
+		RETURN_STRING("Invalid AIN key or name.", 1);
 	}
 
 	success = read_value(ain, &value);
 
 	if (success == -1) {
-	    //PyErr_SetFromErrnoWithFilename(PyExc_IOError, "Error while reading AIN port. Invalid or locked AIN file.");
-	    return NULL;
+		RETURN_STRING("Error while reading AIN port. Invalid or locked AIN file.", 1);
 	}
 
 	//scale modifier
 	value = value / 1800.0;
 
 	RETURN_DOUBLE((double) value);
+}
+
+PHP_FUNCTION(adc_cleanup)
+{
+	adc_cleanup();
+
+	RETURN_TRUE;
+}
+
+#define SMBus_ASSERT_OPEN() do { \
+	if (BBB_G(smbus) == NULL) { \
+		RETURN_NULL(); \
+	} \
+} while(0)
+
+#define SMBus_ASSERT_CLOSED() do { \
+	if (BBB_G(smbus) != NULL) { \
+		RETURN_NULL(); \
+	} \
+} while(0)
+
+#define SMBus_RETURN_ERROR() do { \
+	RETURN_STRING(BBB_G(smbus)->last_error, 1); \
+} while(0)
+
+PHP_FUNCTION(i2c_open)
+{
+	long bus_num;
+	SMBus *_smbus;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &bus_num) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	SMBus_ASSERT_CLOSED();
+
+	_smbus = SMBus_new();
+	if (SMBus_open(_smbus, (int) bus_num) == NULL) {
+		SMBus_RETURN_ERROR();
+	}
+
+	BBB_G(smbus) = _smbus;
+
+	RETURN_TRUE;
+}
+
+
+PHP_FUNCTION(i2c_close)
+{
+	SMBus_ASSERT_OPEN();
+
+	if (SMBus_dealloc(BBB_G(smbus)) != NULL) {
+		SMBus_RETURN_ERROR();
+	}
+
+	BBB_G(smbus) = NULL;
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(i2c_write_quick)
+{
+
+	SMBus_ASSERT_OPEN();
+	long addr;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &addr) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (SMBus_write_quick(BBB_G(smbus), (int) addr) == NULL) {
+		SMBus_RETURN_ERROR();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(i2c_read_byte)
+{
+	SMBus_ASSERT_OPEN();
+	long addr;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &addr) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (SMBus_read_byte(BBB_G(smbus), (int) addr) == NULL) {
+		SMBus_RETURN_ERROR();
+	}
+
+	RETURN_LONG(BBB_G(smbus)->last_result);
+}
+
+PHP_FUNCTION(i2c_write_byte)
+{
+	SMBus_ASSERT_OPEN();
+	long addr, value;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &addr, &value) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (SMBus_write_byte(BBB_G(smbus), (int) addr, (int) value) == NULL) {
+		SMBus_RETURN_ERROR();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(i2c_read_byte_data)
+{
+	SMBus_ASSERT_OPEN();
+	long addr, cmd;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &addr, &cmd) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (SMBus_read_byte_data(BBB_G(smbus), (int) addr, (int) cmd) == NULL) {
+		SMBus_RETURN_ERROR();
+	}
+
+	RETURN_LONG(BBB_G(smbus)->last_result);
+}
+
+PHP_FUNCTION(i2c_write_byte_data)
+{
+	SMBus_ASSERT_OPEN();
+	long addr, cmd, value;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lll", &addr, &cmd, &value) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (SMBus_write_byte_data(BBB_G(smbus), (int) addr, (int) cmd, (int) value) == NULL) {
+		SMBus_RETURN_ERROR();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(i2c_read_word_data)
+{
+	SMBus_ASSERT_OPEN();
+	long addr, cmd;
+	
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &addr, &cmd) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (SMBus_read_word_data(BBB_G(smbus), (int) addr, (int) cmd) == NULL) {
+		SMBus_RETURN_ERROR();
+	}
+
+	RETURN_LONG(BBB_G(smbus)->last_result);
+}
+
+PHP_FUNCTION(i2c_write_word_data)
+{
+	SMBus_ASSERT_OPEN();
+	long addr, cmd, value;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "lll", &addr, &cmd, &value) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (SMBus_write_word_data(BBB_G(smbus), (int) addr, (int) cmd, (int) value) == NULL) {
+		SMBus_RETURN_ERROR();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(i2c_get_last_error)
+{
+	SMBus_ASSERT_OPEN();
+
+	RETURN_STRING(BBB_G(smbus)->last_error, 1);
 }
 /* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and 
