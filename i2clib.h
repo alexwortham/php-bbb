@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <linux/i2c-dev.h>
 
 /*
@@ -51,7 +52,7 @@ typedef struct {
 	SMBus_block_node *block_list;
 	SMBus_block_node *block_data;
 	int block_list_size;
-	char last_error[MAX_ERR_LEN];
+	char *last_error;
 } SMBus;
 
 static void
@@ -128,6 +129,12 @@ SMBus_close_block_data(SMBus *self) {
 	return;
 }
 
+static char *
+SMBus_get_last_error(SMBus *self) {
+
+	return self->last_error;
+}
+
 static SMBus *
 SMBus_new()
 {
@@ -136,6 +143,7 @@ SMBus_new()
 	self->fd = -1;
 	self->addr = -1;
 	self->pec = 0;
+	self->last_error = malloc(MAX_ERR_LEN);
 
 	return (SMBus *)self;
 }
@@ -165,6 +173,7 @@ SMBus_dealloc(SMBus *self)
 		return self;
 	}
 
+	free(self->last_error);
 	free(self);
 
 	return NULL;
@@ -177,13 +186,13 @@ SMBus_open(SMBus *self, int bus)
 {
 	char path[MAXPATH];
 
-	if (snprintf(path, MAXPATH, "/dev/i2c-%d\n", bus) >= MAXPATH) {
+	if (snprintf(path, MAXPATH, "/dev/i2c-%d", bus) >= MAXPATH) {
 		snprintf(self->last_error, MAX_ERR_LEN, "Bus number is invalid.");
 		return NULL;
 	}
 
-	if ((self->fd = open(path, O_RDWR, 0)) == -1) {
-		snprintf(self->last_error, MAX_ERR_LEN, "Could not open i2c device %s\n", path);
+	if ((self->fd = open(path, O_RDWR)) == -1) {
+		snprintf(self->last_error, MAX_ERR_LEN, "Could not open i2c device %s. Errno %d\n", path, errno);
 		return NULL;
 	}
 

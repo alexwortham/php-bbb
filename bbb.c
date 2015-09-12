@@ -203,7 +203,7 @@ PHP_FUNCTION(adc_read_value)
 	}
 
 	// check setup was called prior
-	if (!adc_initialized)
+	if (!BBB_G(is_adc_initialized))
 	{
 		RETURN_STRING("ADC has not been initialized.  You must call setup_adc() before calling read.", 1);
 	}    
@@ -244,7 +244,7 @@ PHP_FUNCTION(adc_cleanup)
 } while(0)
 
 #define SMBus_RETURN_ERROR() do { \
-	RETURN_STRING(BBB_G(smbus)->last_error, 1); \
+	RETURN_STRING(SMBus_get_last_error(BBB_G(smbus)), 1); \
 } while(0)
 
 PHP_FUNCTION(i2c_open)
@@ -259,11 +259,10 @@ PHP_FUNCTION(i2c_open)
 	SMBus_ASSERT_CLOSED();
 
 	_smbus = SMBus_new();
+	BBB_G(smbus) = _smbus;
 	if (SMBus_open(_smbus, (int) bus_num) == NULL) {
 		SMBus_RETURN_ERROR();
 	}
-
-	BBB_G(smbus) = _smbus;
 
 	RETURN_TRUE;
 }
@@ -399,7 +398,7 @@ PHP_FUNCTION(i2c_get_last_error)
 {
 	SMBus_ASSERT_OPEN();
 
-	RETURN_STRING(BBB_G(smbus)->last_error, 1);
+	RETURN_STRING(SMBus_get_last_error(BBB_G(smbus)), 1);
 }
 /* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and 
