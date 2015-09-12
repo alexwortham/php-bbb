@@ -195,9 +195,9 @@ PHP_FUNCTION(adc_read_value)
 	unsigned int ain;
 	float value;
 	int success, arg_len;
-	char *channel = NULL;
+	long channel;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &channel, &arg_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &channel) == FAILURE) {
 		RETURN_NULL();
 	}
 
@@ -207,15 +207,12 @@ PHP_FUNCTION(adc_read_value)
 		RETURN_STRING("ADC has not been initialized.  You must call setup_adc() before calling read.", 1);
 	}    
 
-	if (!get_adc_ain(channel, &ain)) {
+	if (channel < 0 || channel > 6) {
 		RETURN_STRING("Invalid AIN key or name.", 1);
 	}
 
-	if (ADC_read_value(BBB_G(adc), ain, &value) == NULL) {
+	if (ADC_read_value(BBB_G(adc), (unsigned int) channel, &value) == NULL) {
 		RETURN_STRING("Error while reading AIN port. Invalid or locked AIN file.", 1);
-	}
-
-	if (success == -1) {
 	}
 
 	//scale modifier

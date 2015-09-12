@@ -32,9 +32,9 @@ typedef struct {
 	int adc_initialized;
 	int module_setup;
 	int setup_error;
-	char adc_prefix_dir[40];
-	char ocp_dir[25];
-	char ctrl_dir[35];
+	char *adc_prefix_dir;
+	char *ocp_dir;
+	char *ctrl_dir;
 } ADC;
 
 int build_path(const char *partial_path, const char *prefix, char *full_path, size_t full_path_len)
@@ -62,6 +62,10 @@ int build_path(const char *partial_path, const char *prefix, char *full_path, si
     return 0;
 }
 
+#define MAX_PREFIX 40
+#define MAX_OCP 25
+#define MAX_CTRL 35
+
 ADC *
 load_device_tree(ADC *self, const char *name)
 {
@@ -69,8 +73,9 @@ load_device_tree(ADC *self, const char *name)
     char slots[40];
     char line[256];
 
-    build_path("/sys/devices", "bone_capemgr", self->ctrl_dir, sizeof(self->ctrl_dir));
+    build_path("/sys/devices", "bone_capemgr", self->ctrl_dir, MAX_CTRL);
     snprintf(slots, sizeof(slots), "%s/slots", self->ctrl_dir);
+    printf("%s\n", slots);
 
     file = fopen(slots, "r+");
     if (!file) {
@@ -104,7 +109,7 @@ unload_device_tree(ADC *self, const char *name)
     char line[256];
     char *slot_line;
 
-    build_path("/sys/devices", "bone_capemgr", self->ctrl_dir, sizeof(self->ctrl_dir));
+    build_path("/sys/devices", "bone_capemgr", self->ctrl_dir, MAX_CTRL);
     snprintf(slots, sizeof(slots), "%s/slots", self->ctrl_dir);
 
     file = fopen(slots, "r+");
@@ -139,6 +144,9 @@ ADC_new(void) {
 	adc->adc_initialized = 0;
 	adc->module_setup = 0;
 	adc->setup_error = 0;
+	adc->adc_prefix_dir = malloc(MAX_PREFIX);
+	adc->ocp_dir = malloc(MAX_OCP);
+	adc->ctrl_dir = malloc(MAX_CTRL);
 
 	return adc;
 }
@@ -153,9 +161,9 @@ ADC_initialize(ADC *self)
     }
 
     if (load_device_tree(self, "cape-bone-iio")) {
-        build_path("/sys/devices", "ocp.", (self->ocp_dir), sizeof((self->ocp_dir)));
-        build_path((self->ocp_dir), "helper.", (self->adc_prefix_dir), sizeof((self->adc_prefix_dir)));
-        strncat((self->adc_prefix_dir), "/AIN", sizeof((self->adc_prefix_dir)));
+        build_path("/sys/devices", "ocp.", (self->ocp_dir), MAX_OCP);
+        build_path((self->ocp_dir), "helper.", (self->adc_prefix_dir), MAX_PREFIX);
+        strncat((self->adc_prefix_dir), "/AIN", MAX_PREFIX);
 
         // Test that the directory has an AIN entry (found correct devicetree)
         snprintf(test_path, sizeof(test_path), "%s%d", (self->adc_prefix_dir), 0);
@@ -220,6 +228,9 @@ ADC *
 ADC_cleanup(ADC *self)
 {
 	unload_device_tree(self, "cape-bone-iio");
+	free(self->adc_prefix_dir);
+	free(self->ocp_dir);
+	free(self->ctrl_dir);
 	free(self);
 
 	return NULL;
