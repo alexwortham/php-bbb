@@ -39,6 +39,7 @@ extern zend_module_entry bbb_module_entry;
 #endif
 
 #include "i2clib.h"
+#include "adclib.h"
 
 PHP_MINIT_FUNCTION(bbb);
 PHP_MSHUTDOWN_FUNCTION(bbb);
@@ -80,6 +81,7 @@ ZEND_BEGIN_MODULE_GLOBALS(bbb)
 	char	ctrl_dir[35];
 	char	ocp_dir[25];
 	SMBus	*smbus;
+	ADC	*adc;
 ZEND_END_MODULE_GLOBALS(bbb)
 
 /* In every utility function you add that needs to use variables 

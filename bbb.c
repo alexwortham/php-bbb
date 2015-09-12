@@ -26,7 +26,6 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 #include "php_bbb.h"
-#include "c_adc.h"
 
 /* If you declare any globals in php_bbb.h uncomment this:
 */
@@ -186,7 +185,7 @@ PHP_FUNCTION(confirm_bbb_compiled)
 
 PHP_FUNCTION(setup_adc)
 {
-	adc_setup();
+	BBB_G(adc) = ADC_setup();
 
 	RETURN_TRUE;
 }
@@ -203,7 +202,7 @@ PHP_FUNCTION(adc_read_value)
 	}
 
 	// check setup was called prior
-	if (!BBB_G(is_adc_initialized))
+	if (!BBB_G(adc)->adc_initialized)
 	{
 		RETURN_STRING("ADC has not been initialized.  You must call setup_adc() before calling read.", 1);
 	}    
@@ -212,10 +211,11 @@ PHP_FUNCTION(adc_read_value)
 		RETURN_STRING("Invalid AIN key or name.", 1);
 	}
 
-	success = read_value(ain, &value);
+	if (ADC_read_value(BBB_G(adc), ain, &value) == NULL) {
+		RETURN_STRING("Error while reading AIN port. Invalid or locked AIN file.", 1);
+	}
 
 	if (success == -1) {
-		RETURN_STRING("Error while reading AIN port. Invalid or locked AIN file.", 1);
 	}
 
 	//scale modifier
@@ -226,7 +226,7 @@ PHP_FUNCTION(adc_read_value)
 
 PHP_FUNCTION(adc_cleanup)
 {
-	adc_cleanup();
+	ADC_cleanup(BBB_G(adc));
 
 	RETURN_TRUE;
 }
