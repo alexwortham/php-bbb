@@ -40,6 +40,7 @@ extern zend_module_entry bbb_module_entry;
 
 #include "i2clib.h"
 #include "adclib.h"
+#include "gpiolib.h"
 
 PHP_MINIT_FUNCTION(bbb);
 PHP_MSHUTDOWN_FUNCTION(bbb);
@@ -63,6 +64,12 @@ PHP_FUNCTION(i2c_write_byte_data);
 PHP_FUNCTION(i2c_read_word_data);
 PHP_FUNCTION(i2c_write_word_data);
 PHP_FUNCTION(i2c_get_last_error);
+// GPIO functions
+PHP_FUNCTION(gpio_setup);
+PHP_FUNCTION(gpio_output);
+PHP_FUNCTION(gpio_input);
+PHP_FUNCTION(gpio_get_mode);
+PHP_FUNCTION(gpio_cleanup);
 //PHP_FUNCTION(adc_read_raw);
 
 /* 

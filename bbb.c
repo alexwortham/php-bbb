@@ -53,6 +53,11 @@ const zend_function_entry bbb_functions[] = {
 	PHP_FE(i2c_read_word_data,	NULL)
 	PHP_FE(i2c_write_word_data,	NULL)
 	PHP_FE(i2c_get_last_error,	NULL)
+	PHP_FE(gpio_setup,		NULL)
+	PHP_FE(gpio_output,		NULL)
+	PHP_FE(gpio_input,		NULL)
+	PHP_FE(gpio_get_mode,		NULL)
+	PHP_FE(gpio_cleanup,		NULL)
 	//PHP_FE(adc_read_raw,	NULL)
 	PHP_FE_END	/* Must be the last line in bbb_functions[] */
 };
@@ -102,6 +107,10 @@ static void php_bbb_init_globals(zend_bbb_globals *bbb_globals)
 	bbb_globals->is_pwm_initialized = 0;
 	bbb_globals->setup_error = 0;
 	bbb_globals->module_setup = 0;
+	int i;
+	for (i=0; i<120; i++) {
+		bbb_globals->gpio_direction[i] = -1;
+	}
 }
 /* }}} */
 
@@ -396,6 +405,123 @@ PHP_FUNCTION(i2c_get_last_error)
 	SMBus_ASSERT_OPEN();
 
 	RETURN_STRING(SMBus_get_last_error(BBB_G(smbus)), 1);
+}
+
+PHP_FUNCTION(gpio_setup)
+{
+	unsigned int gpio;
+	char *channel;
+	int len;
+	int direction;
+	int pud = PUD_OFF;
+	int initial = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl|ll", &channel, &len, &direction, &pud, &initial) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (direction != INPUT && direction != OUTPUT)
+	{
+		RETURN_STRING("An invalid direction was passed to setup()", 1);
+	}
+
+	if (direction == OUTPUT)
+	   pud = PUD_OFF;
+
+	if (pud != PUD_OFF && pud != PUD_DOWN && pud != PUD_UP)
+	{
+		RETURN_STRING("Invalid value for pull_up_down - should be either PUD_OFF, PUD_UP or PUD_DOWN", 1);
+	}
+
+	if (get_gpio_number(channel, &gpio))
+	    RETURN_NULL();
+
+	gpio_export(gpio);
+	gpio_set_direction(gpio, direction);
+	if (direction == OUTPUT) {
+	    gpio_set_value(gpio, initial);
+	} else {
+	    gpio_set_value(gpio, pud);
+	}
+
+	BBB_G(gpio_direction)[gpio] = direction;
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(gpio_output)
+{
+	unsigned int gpio;
+	int value, len;
+	char *channel;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &channel, &len, &value) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (get_gpio_number(channel, &gpio))
+		RETURN_NULL();      
+
+	if (BBB_G(gpio_direction)[gpio] != OUTPUT)
+	{
+		RETURN_STRING("The GPIO channel has not been setup() as an OUTPUT", 1);
+	}
+
+	gpio_set_value(gpio, value);
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(gpio_input)
+{
+	unsigned int gpio;
+	char *channel;
+	unsigned int value;
+	int len;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &channel, &len) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (get_gpio_number(channel, &gpio))
+		RETURN_NULL();
+
+	// check channel is set up as an input or output
+	if (BBB_G(gpio_direction)[gpio] != INPUT && BBB_G(gpio_direction)[gpio] != OUTPUT)
+	{
+		RETURN_STRING("You must setup() the GPIO channel first", 1);
+	}
+
+	gpio_get_value(gpio, &value);
+
+	RETURN_LONG((long) value);
+}
+
+PHP_FUNCTION(gpio_get_mode)
+{
+	unsigned int gpio;
+	unsigned int value;
+	char *channel;
+	int len;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &channel, &len) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (get_gpio_number(channel, &gpio))
+		RETURN_NULL();
+
+	gpio_get_direction(gpio, &value);
+
+	RETURN_LONG((long) value);
+}
+
+PHP_FUNCTION(gpio_cleanup)
+{
+
+	exports_cleanup();
+
+	RETURN_TRUE;
 }
 /* }}} */
 /* The previous line is meant for vim and emacs, so it can correctly fold and 
