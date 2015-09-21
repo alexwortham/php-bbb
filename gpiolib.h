@@ -50,6 +50,14 @@ SOFTWARE.
 #define PUD_DOWN 1
 #define PUD_UP   2
 
+#define MODE_UNKNOWN -1
+#define BOARD        10
+#define BCM          11
+
+#define ARRAY_SIZE(a)  (sizeof(a) / sizeof(a[0]))
+
+#define FILENAME_BUFFER_SIZE 128
+
 const char *stredge[4] = {"none", "rising", "falling", "both"};
 typedef struct pins_t { 
     const char *name; 
