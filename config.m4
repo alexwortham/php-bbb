@@ -59,5 +59,5 @@ if test "$PHP_BBB" != "no"; then
   dnl
   dnl PHP_SUBST(BBB_SHARED_LIBADD)
 
-  PHP_NEW_EXTENSION(bbb, bbb.c, $ext_shared)
+  PHP_NEW_EXTENSION(bbb, bbb.c iio_utils.c ti_am335x_adc_buffer.c, $ext_shared)
 fi

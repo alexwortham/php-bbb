@@ -4135,7 +4135,7 @@ $as_echo "#define HAVE_BBBLIB 1" >>confdefs.h
 
 
   old_IFS=$IFS
-  for ac_src in bbb.c; do
+  for ac_src in bbb.c iio_utils.c ti_am335x_adc_buffer.c; do
 
       IFS=.
       set $ac_src
@@ -4184,7 +4184,7 @@ EOF
 
 
   old_IFS=$IFS
-  for ac_src in bbb.c; do
+  for ac_src in bbb.c iio_utils.c ti_am335x_adc_buffer.c; do
 
       IFS=.
       set $ac_src
@@ -4314,7 +4314,7 @@ _ACEOF
 
 
   old_IFS=$IFS
-  for ac_src in bbb.c; do
+  for ac_src in bbb.c iio_utils.c ti_am335x_adc_buffer.c; do
 
       IFS=.
       set $ac_src
@@ -4360,7 +4360,7 @@ EOF
 
 
   old_IFS=$IFS
-  for ac_src in bbb.c; do
+  for ac_src in bbb.c iio_utils.c ti_am335x_adc_buffer.c; do
 
       IFS=.
       set $ac_src
