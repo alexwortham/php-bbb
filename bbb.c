@@ -26,6 +26,7 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 #include "php_bbb.h"
+#include "ti_am335x_adc_buffer.h"
 
 /* If you declare any globals in php_bbb.h uncomment this:
 */
@@ -203,7 +204,7 @@ PHP_FUNCTION(setup_adc)
 PHP_FUNCTION(adc_read_value)
 {
 	unsigned int ain;
-	float value;
+	double value;
 	int success, arg_len;
 	long channel;
 
@@ -217,7 +218,7 @@ PHP_FUNCTION(adc_read_value)
 		RETURN_STRING("ADC has not been initialized.  You must call setup_adc() before calling read.", 1);
 	}    
 
-	if (channel < 0 || channel > 6) {
+	if (channel < 0 || channel > 7) {
 		RETURN_STRING("Invalid AIN key or name.", 1);
 	}
 
@@ -226,7 +227,7 @@ PHP_FUNCTION(adc_read_value)
 	}
 
 	//scale modifier
-	value = value / 1800.0;
+	value = value / 4096.0;
 
 	RETURN_DOUBLE((double) value);
 }
@@ -234,7 +235,7 @@ PHP_FUNCTION(adc_read_value)
 PHP_FUNCTION(adc_read_raw)
 {
 	unsigned int ain;
-	float value;
+	double value;
 	int success, arg_len;
 	long channel;
 

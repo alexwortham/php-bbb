@@ -27,116 +27,19 @@ SOFTWARE.
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <ti_am335x_adc_buffer.h>
 
-typedef struct {
+typedef struct ADC {
 	int adc_initialized;
 	int module_setup;
 	int setup_error;
-	char *adc_prefix_dir;
-	char *ocp_dir;
-	char *ctrl_dir;
+	char **ain_files;
 } ADC;
 
-int build_path(const char *partial_path, const char *prefix, char *full_path, size_t full_path_len)
-{
-    DIR *dp;
-    struct dirent *ep;
-
-    dp = opendir (partial_path);
-    if (dp != NULL) {
-        while ((ep = readdir (dp))) {
-            // Enforce that the prefix must be the first part of the file
-            char* found_string = strstr(ep->d_name, prefix);
-
-            if (found_string != NULL && (ep->d_name - found_string) == 0) {
-                snprintf(full_path, full_path_len, "%s/%s", partial_path, ep->d_name);
-                (void) closedir (dp);
-                return 1;
-            }
-        }
-        (void) closedir (dp);
-    } else {
-        return 0;
-    }
-
-    return 0;
-}
-
-#define MAX_PREFIX 40
-#define MAX_OCP 25
-#define MAX_CTRL 35
-
-ADC *
-load_device_tree(ADC *self, const char *name)
-{
-    FILE *file = NULL;
-    char slots[40];
-    char line[256];
-
-    build_path("/sys/devices", "bone_capemgr", self->ctrl_dir, MAX_CTRL);
-    snprintf(slots, sizeof(slots), "%s/slots", self->ctrl_dir);
-    printf("%s\n", slots);
-
-    file = fopen(slots, "r+");
-    if (!file) {
-        //PyErr_SetFromErrnoWithFilename(PyExc_IOError, slots);
-        return NULL;
-    }
-
-    while (fgets(line, sizeof(line), file)) {
-        //the device is already loaded, return 1
-        if (strstr(line, name)) {
-            fclose(file);
-            return self;
-        }
-    }
-
-    //if the device isn't already loaded, load it, and return
-    fprintf(file, name);
-    fclose(file);
-
-    //0.2 second delay
-    nanosleep((struct timespec[]){{0, 200000000}}, NULL);
-
-    return self;
-}
-
-ADC *
-unload_device_tree(ADC *self, const char *name)
-{
-    FILE *file = NULL;
-    char slots[40];
-    char line[256];
-    char *slot_line;
-
-    build_path("/sys/devices", "bone_capemgr", self->ctrl_dir, MAX_CTRL);
-    snprintf(slots, sizeof(slots), "%s/slots", self->ctrl_dir);
-
-    file = fopen(slots, "r+");
-    if (!file) {
-        //PyErr_SetFromErrnoWithFilename(PyExc_IOError, slots);
-        return NULL;
-    }
-
-    while (fgets(line, sizeof(line), file)) {
-        //the device is loaded, let's unload it
-        if (strstr(line, name)) {
-            slot_line = strtok(line, ":");
-            //remove leading spaces
-            while(*slot_line == ' ')
-                slot_line++;
-
-            fprintf(file, "-%s", slot_line);
-            fclose(file);
-            return self;
-        }
-    }
-
-    //not loaded, close file
-    fclose(file);
-
-    return self;
-}
+#define CHAN_SIZE 50
+#define NUM_CHANNELS 8
+#define PTR_SIZE (sizeof(char *))
+const char *adc_dir_format = "%siio:device%d/in_voltage%d_raw";
 
 ADC *
 ADC_new(void) {
@@ -144,9 +47,12 @@ ADC_new(void) {
 	adc->adc_initialized = 0;
 	adc->module_setup = 0;
 	adc->setup_error = 0;
-	adc->adc_prefix_dir = malloc(MAX_PREFIX);
-	adc->ocp_dir = malloc(MAX_OCP);
-	adc->ctrl_dir = malloc(MAX_CTRL);
+    	int dev_num = find_type_by_name(ADC_DEVICE_NAME, "iio:device");
+	adc->ain_files = malloc( NUM_CHANNELS * PTR_SIZE );
+	int i;
+	for (i = 0; i < NUM_CHANNELS; i++) {
+    		asprintf(&adc->ain_files[i], adc_dir_format, iio_dir, dev_num, i);
+	}
 
 	return adc;
 }
@@ -154,32 +60,23 @@ ADC_new(void) {
 ADC *
 ADC_initialize(ADC *self)
 {
-    char test_path[40];
+    char *test_path;
     FILE *fh;
+    int dev_num;
     if (self->adc_initialized) {
         return self;
     }
 
-    if (load_device_tree(self, "cape-bone-iio")) {
-        build_path("/sys/devices", "ocp.", (self->ocp_dir), MAX_OCP);
-        build_path((self->ocp_dir), "helper.", (self->adc_prefix_dir), MAX_PREFIX);
-        strncat((self->adc_prefix_dir), "/AIN", MAX_PREFIX);
+    /* Test opening the sysfs file for channel 0 */
+    fh = fopen(self->ain_files[0], "r");
 
-        // Test that the directory has an AIN entry (found correct devicetree)
-        snprintf(test_path, sizeof(test_path), "%s%d", (self->adc_prefix_dir), 0);
-        
-        fh = fopen(test_path, "r");
-
-        if (!fh) {
-            return NULL; 
-        }
-        fclose(fh);
-
-        (self->adc_initialized) = 1;
-        return self;
+    if (!fh) {
+        return NULL; 
     }
+    fclose(fh);
 
-    return NULL;
+    (self->adc_initialized) = 1;
+    return self;
 }
 
 ADC *
@@ -189,31 +86,31 @@ ADC_setup() {
 }
 
 ADC *
-ADC_read_value(ADC *self, unsigned int ain, float *value)
+ADC_read_value(ADC *self, unsigned int ain, double *value)
 {
     FILE * fh;
-    char ain_path[40];
     int err, try_count=0;
-    int read_successful;
-    snprintf(ain_path, sizeof(ain_path), "%s%d", (self->adc_prefix_dir), ain);
+    int read_successful = 0;
+    int raw_val;
     
-    read_successful = 0;
-
     // Workaround to AIN bug where reading from more than one AIN would cause access failures
     while (!read_successful && try_count < 3)
     {
-        fh = fopen(ain_path, "r");
+        fh = fopen(self->ain_files[ain], "r");
 
         // Likely a bad path to the ocp device driver 
         if (!fh) {
+		printf("Could not open %s\n", self->ain_files[ain]);
             return NULL;
         }
 
         fseek(fh, 0, SEEK_SET);
-        err = fscanf(fh, "%f", value);
+        err = fscanf(fh, "%d", &raw_val);
 
         if (err != EOF) read_successful = 1;
         fclose(fh);
+
+	*value = (double) raw_val;
 
         try_count++;
     }
@@ -227,10 +124,11 @@ ADC_read_value(ADC *self, unsigned int ain, float *value)
 ADC *
 ADC_cleanup(ADC *self)
 {
-	unload_device_tree(self, "cape-bone-iio");
-	free(self->adc_prefix_dir);
-	free(self->ocp_dir);
-	free(self->ctrl_dir);
+	int i;
+	for (i = 0; i < NUM_CHANNELS; i++) {
+    		free(&self->ain_files[i]);
+	}
+	free(self->ain_files);
 	free(self);
 
 	return NULL;
