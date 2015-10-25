@@ -14,14 +14,14 @@
 #define CHAN_5	32
 #define CHAN_6	64
 #define CHAN_7	128
-#define IS_CHAN_0_ENABLED(c) ( CHAN_0 & c > 0 )
-#define IS_CHAN_1_ENABLED(c) ( CHAN_1 & c > 0 )
-#define IS_CHAN_2_ENABLED(c) ( CHAN_2 & c > 0 )
-#define IS_CHAN_3_ENABLED(c) ( CHAN_3 & c > 0 )
-#define IS_CHAN_4_ENABLED(c) ( CHAN_4 & c > 0 )
-#define IS_CHAN_5_ENABLED(c) ( CHAN_5 & c > 0 )
-#define IS_CHAN_6_ENABLED(c) ( CHAN_6 & c > 0 )
-#define IS_CHAN_7_ENABLED(c) ( CHAN_7 & c > 0 )
+#define IS_CHAN_0_ENABLED(c) ( (CHAN_0 & c) > 0 )
+#define IS_CHAN_1_ENABLED(c) ( (CHAN_1 & c) > 0 )
+#define IS_CHAN_2_ENABLED(c) ( (CHAN_2 & c) > 0 )
+#define IS_CHAN_3_ENABLED(c) ( (CHAN_3 & c) > 0 )
+#define IS_CHAN_4_ENABLED(c) ( (CHAN_4 & c) > 0 )
+#define IS_CHAN_5_ENABLED(c) ( (CHAN_5 & c) > 0 )
+#define IS_CHAN_6_ENABLED(c) ( (CHAN_6 & c) > 0 )
+#define IS_CHAN_7_ENABLED(c) ( (CHAN_7 & c) > 0 )
 
 /**
  * struct ti_adc_buffer: information about a buffer.
@@ -32,6 +32,7 @@
  * @buf_len: The length of the buffer.
  * @dev_num: The number of the buffer's underlying IIO device.
  * @data_len: The number of entries read into @data.
+ * @channels_en: The bitmask of enabled channels.
  * @dev_name: The name of the IIO device driver.
  * @data: Points to where to store data read from buffer.
  * @buf_dir_name: The FQN of the IIO device's buffer directory.
@@ -49,6 +50,7 @@ typedef struct ti_adc_buffer {
 	int dev_num;
 	int dev_fd;
 	int data_len;
+	int channels_en;
 	char *dev_name;
 	char *data;
 	char *buf_dir_name;

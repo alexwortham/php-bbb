@@ -22,11 +22,11 @@
 #define CHANNEL_ENABLE 1
 #define CHANNEL_DISABLE 0
 
-int ti_adc_get_buf_dir_name(char *buf_dir_name, int dev_num) {
+int ti_adc_get_buf_dir_name(ti_adc_buffer *buffer, int dev_num) {
 
 	int ret = 0;
 
-	ret = asprintf(&buf_dir_name, "%siio:device%d/buffer", iio_dir, dev_num);
+	ret = asprintf(&buffer->buf_dir_name, "%siio:device%d/buffer", iio_dir, dev_num);
 	if (ret < 0) {
 		printf("Failed to allocate memory for constructing buffer directory name.\n");
 		return -ENOMEM;
@@ -74,11 +74,11 @@ int ti_adc_buffer_set_length(ti_adc_buffer *buffer, int length) {
 	return 0;
 }
 
-int ti_adc_get_scan_elements_dir(char *scan_el_dir, int dev_num) {
+int ti_adc_get_scan_elements_dir(ti_adc_buffer *buffer, int dev_num) {
 
 	int ret = 0;
 
-	ret = asprintf(&scan_el_dir, "%siio:device%d/scan_elements", iio_dir, dev_num);
+	ret = asprintf(&buffer->scan_el_dir, "%siio:device%d/scan_elements", iio_dir, dev_num);
 	if (ret < 0) {
 		printf("Failed to allocate memory for constructing scan_elements dir name.\n");
 		return -ENOMEM;
@@ -103,6 +103,7 @@ int ti_adc_buffer_channel_enable(ti_adc_buffer *buffer, int channel) {
 		printf("Could not write to %s/%s sysfs file.\n", buffer->scan_el_dir, chan);
 		return -errno;
 	}
+	free(chan);
 
 	buffer->num_channels++;
 
@@ -125,6 +126,7 @@ int ti_adc_buffer_channel_disable(ti_adc_buffer *buffer, int channel) {
 		printf("Could not write to %s/%s sysfs file.\n", buffer->scan_el_dir, chan);
 		return -errno;
 	}
+	free(chan);
 
 	buffer->num_channels--;
 
@@ -149,10 +151,13 @@ ti_adc_buffer *ti_adc_buffer_init(int length, int channels) {
 		return NULL;
 	}
 
+	printf("Found iio device number: %d\n", dev_num);
+
 	buffer = (struct ti_adc_buffer *) malloc(sizeof(ti_adc_buffer));
 	buffer->num_channels = 0;
 	buffer->scan_index = 0;
 	buffer->read_size = 0;
+	buffer->channels_en = channels;
 	buffer->dev_num = dev_num;
 	buffer->dev_fd = -1;
 	buffer->dev_name = ADC_DEVICE_NAME;
@@ -162,21 +167,24 @@ ti_adc_buffer *ti_adc_buffer_init(int length, int channels) {
 	buffer->dev = NULL;
 	buffer->dev_dir_name = NULL;
 
-	ret = ti_adc_get_buf_dir_name(buffer->buf_dir_name, dev_num);
+	ret = ti_adc_get_buf_dir_name(buffer, dev_num);
 	if (ret < 0) {
 		ti_adc_buffer_close(buffer);
 		return NULL;
 	}
-	ret = ti_adc_get_scan_elements_dir(buffer->scan_el_dir, dev_num);
+	printf("Found buffer directory name: %s\n", buffer->buf_dir_name);
+	ret = ti_adc_get_scan_elements_dir(buffer, dev_num);
 	if (ret < 0) {
 		ti_adc_buffer_close(buffer);
 		return NULL;
 	}
-	ret = asprintf(buffer->dev, "/dev/iio:device%d", dev_num);
+	printf("Found scan elements directory: %s\n", buffer->scan_el_dir);
+	ret = asprintf(&buffer->dev, "/dev/iio:device%d", dev_num);
 	if (ret < 0) {
 		ti_adc_buffer_close(buffer);
 		return NULL;
 	}
+	printf("Found iio device file: %s\n", buffer->dev);
 
 	if (length > 0) {
 		buffer->buf_len = length;
@@ -184,12 +192,17 @@ ti_adc_buffer *ti_adc_buffer_init(int length, int channels) {
 		buffer->buf_len = 1024;//a sensible default
 	}
 	
+	printf("Channel mask is: %d\n", channels);
 	/* Check bitmask for channel 0 */
-	if (IS_CHAN_0_ENABLED(channels))
+	if (IS_CHAN_0_ENABLED(channels)) {
+		printf("0: %d & %d = %d\n", CHAN_0, channels, CHAN_0 & channels);
 		ti_adc_buffer_channel_enable(buffer, 0);
+	}
 	/* Check bitmask for channel 1 */
-	if (IS_CHAN_1_ENABLED(channels))
+	if (IS_CHAN_1_ENABLED(channels)) {
+		printf("l: %d & %d = %d\n", CHAN_1, channels, CHAN_1 & channels);
 		ti_adc_buffer_channel_enable(buffer, 1);
+	}
 	/* Check bitmask for channel 2 */
 	if (IS_CHAN_2_ENABLED(channels))
 		ti_adc_buffer_channel_enable(buffer, 2);
@@ -242,6 +255,12 @@ ti_adc_buffer *ti_adc_buffer_init(int length, int channels) {
 int ti_adc_buffer_open(ti_adc_buffer *buffer) {
 
 	int ret;
+	ret = ti_adc_buffer_set_length(buffer, buffer->buf_len);
+	if (ret < 0) {
+		printf("Could not set buffer length.\n");
+		return ret;
+	}
+
 	ret = ti_adc_buffer_enable(buffer);
 	if (ret < 0) {
 		printf("Could not open buffer.\n");
@@ -261,6 +280,16 @@ int ti_adc_buffer_close(ti_adc_buffer *buffer) {
 	if (buffer->dev_fd > 0) {
 		close(buffer->dev_fd);
 	}
+
+	ti_adc_buffer_disable(buffer);
+
+	int i, j;
+	for (i = 1, j = 0; i <= 128; i *= 2, j++) {
+		if ( (i & buffer->channels_en) > 0 ) {
+			ti_adc_buffer_channel_disable(buffer, j);
+		}
+	}
+
 	if (buffer->data)
 		free(buffer->data);
 	if (buffer->buf_dir_name)
@@ -272,6 +301,7 @@ int ti_adc_buffer_close(ti_adc_buffer *buffer) {
 	if (buffer->dev_dir_name)
 		free(buffer->dev_dir_name);
 	if (buffer->channels) {
+		//disable each channel...
 		//free each channel...
 	}
 	free(buffer);
@@ -289,7 +319,7 @@ int ti_adc_buffer_read(ti_adc_buffer *buffer) {
 	if (read_size >= 0) {
 		buffer->read_size = read_size;
 		buffer->data_len = buffer->read_size / buffer->scan_size;
-		buffer->scan_index = 0;
+		buffer->scan_index = -1;
 	}
 
 	return read_size;

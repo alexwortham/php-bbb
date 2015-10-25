@@ -45,6 +45,9 @@ const zend_function_entry bbb_functions[] = {
 	PHP_FE(adc_read_value,		NULL)
 	PHP_FE(adc_read_raw,		NULL)
 	PHP_FE(adc_cleanup,		NULL)
+	PHP_FE(adc_buffer_open,		NULL)
+	PHP_FE(adc_buffer_close,	NULL)
+	PHP_FE(adc_buffer_read,		NULL)
 	PHP_FE(i2c_open,		NULL)
 	PHP_FE(i2c_close,		NULL)
 	PHP_FE(i2c_write_quick,		NULL)
@@ -265,6 +268,89 @@ PHP_FUNCTION(adc_cleanup)
 	ADC_cleanup(BBB_G(adc));
 
 	RETURN_TRUE;
+}
+
+PHP_FUNCTION(adc_buffer_open)
+{
+	long length, channels;
+	ti_adc_buffer *buff = NULL;
+	int ret;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &length, &channels) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (BBB_G(buffer) == NULL) {
+		BBB_G(buffer) = ti_adc_buffer_init((int) length, (int) channels);
+		buff = BBB_G(buffer);
+		if (buff == NULL) {
+			RETURN_STRING("Error initializing buffer.", 1);
+		}
+		ret = ti_adc_buffer_open(buff);
+		if (ret < 0) {
+			RETURN_STRING("Error opening buffer.", 1);
+		}
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(adc_buffer_close)
+{
+	ti_adc_buffer *buff = BBB_G(buffer);
+
+	if (buff != NULL) {
+		if (ti_adc_buffer_close(buff) != 0) {
+			RETURN_STRING("Error closing buffer.", 1);
+		}
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(adc_buffer_read)
+{
+	ti_adc_buffer *buff = BBB_G(buffer);
+	int ret, i;
+	zval *array;
+
+	if (buff == NULL) {
+		RETURN_STRING("Buffer is not open!", 1);
+	}
+
+	ret = ti_adc_buffer_read(buff);
+	if (ret < 0) {
+		RETURN_STRING("Error reading from buffer.", 1);
+	}
+
+	ALLOC_INIT_ZVAL(array);
+	array_init(array);
+	zval **channel = emalloc(sizeof(zval *) * buff->num_channels);
+	for (i = 0; i < buff->num_channels; i++) {
+		ALLOC_INIT_ZVAL(channel[i]);
+		array_init(channel[i]);
+		add_next_index_zval(array, channel[i]);
+	}
+
+	while (ti_adc_buffer_next(buff) != -1) {
+		for (i = 0; i < buff->num_channels; i++) {
+			add_next_index_long(channel[i], (long) ti_adc_buffer_get_current(buff, i));
+		}
+	}
+
+	efree(channel);
+	/* Let's for now assume not calling dtor will not create a memory leak...
+	 * Though I think I understand how that works... I think it probably stands for
+	 * "decrement total object references". The only reason I can see that it might
+	 * be necessary to call dtor on a freshly created zval is if ALLOC_INIT_ZVAL()
+	 * increments the reference count when it shouldn't? That seems silly but might
+	 * be the case.
+	for (i = 0; i < buff->num_channels; i++) {
+		zval_dtor(channel[i]);
+	}
+	*/
+
+	RETURN_ZVAL(array, 0, 1);
 }
 
 #define SMBus_ASSERT_OPEN() do { \

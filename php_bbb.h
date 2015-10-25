@@ -54,6 +54,9 @@ PHP_FUNCTION(setup_adc);
 PHP_FUNCTION(adc_read_value);
 PHP_FUNCTION(adc_read_raw);
 PHP_FUNCTION(adc_cleanup);
+PHP_FUNCTION(adc_buffer_open);
+PHP_FUNCTION(adc_buffer_close);
+PHP_FUNCTION(adc_buffer_read);
 // I2C functions
 PHP_FUNCTION(i2c_open);
 PHP_FUNCTION(i2c_close);
@@ -71,7 +74,6 @@ PHP_FUNCTION(gpio_output);
 PHP_FUNCTION(gpio_input);
 PHP_FUNCTION(gpio_get_mode);
 PHP_FUNCTION(gpio_cleanup);
-//PHP_FUNCTION(adc_read_raw);
 
 /* 
   	Declare any global variables you may need between the BEGIN
