@@ -60,17 +60,17 @@ const zend_function_entry bbb_functions[] = {
 	PHP_FE(i2c_get_last_error,	NULL)
 	PHP_FE(lcd_begin,			NULL)
 	PHP_FE(lcd_print,			NULL)
-	PHP_FE(lcd_clear,			NULL);
-	PHP_FE(lcd_home,			NULL);
-	PHP_FE(lcd_set_cursor_position,	NULL);
-	PHP_FE(lcd_set_display,			NULL);
-	PHP_FE(lcd_set_blink,			NULL);
-	PHP_FE(lcd_set_cursor,			NULL);
-	PHP_FE(lcd_scroll_display,		NULL);
-	PHP_FE(lcd_set_direction,		NULL);
-	PHP_FE(lcd_set_backlight,		NULL);
-	PHP_FE(lcd_set_autoscroll,		NULL);
-	PHP_FE(lcd_command,				NULL);
+	PHP_FE(lcd_clear,			NULL)
+	PHP_FE(lcd_home,			NULL)
+	PHP_FE(lcd_set_cursor_position,	NULL)
+	PHP_FE(lcd_set_display,			NULL)
+	PHP_FE(lcd_set_blink,			NULL)
+	PHP_FE(lcd_set_cursor,			NULL)
+	PHP_FE(lcd_scroll_display,		NULL)
+	PHP_FE(lcd_set_direction,		NULL)
+	PHP_FE(lcd_set_backlight,		NULL)
+	PHP_FE(lcd_set_autoscroll,		NULL)
+	PHP_FE(lcd_command,				NULL)
 	PHP_FE(gpio_setup,		NULL)
 	PHP_FE(gpio_output,		NULL)
 	PHP_FE(gpio_input,		NULL)
