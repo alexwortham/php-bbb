@@ -58,6 +58,8 @@ if test "$PHP_BBB" != "no"; then
   dnl ])
   dnl
   dnl PHP_SUBST(BBB_SHARED_LIBADD)
-
+  PHP_REQUIRE_CXX()
+  PHP_SUBST(BBB_SHARED_LIBADD)
+  PHP_ADD_LIBRARY(stdc++, 1, BBB_SHARED_LIBADD)
   PHP_NEW_EXTENSION(bbb, bbb.c iio_utils.c ti_am335x_adc_buffer.c, $ext_shared)
 fi
