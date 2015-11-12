@@ -60,6 +60,17 @@ const zend_function_entry bbb_functions[] = {
 	PHP_FE(i2c_get_last_error,	NULL)
 	PHP_FE(lcd_begin,			NULL)
 	PHP_FE(lcd_print,			NULL)
+	PHP_FE(lcd_clear,			NULL);
+	PHP_FE(lcd_home,			NULL);
+	PHP_FE(lcd_set_cursor_position,	NULL);
+	PHP_FE(lcd_set_display,			NULL);
+	PHP_FE(lcd_set_blink,			NULL);
+	PHP_FE(lcd_set_cursor,			NULL);
+	PHP_FE(lcd_scroll_display,		NULL);
+	PHP_FE(lcd_set_direction,		NULL);
+	PHP_FE(lcd_set_backlight,		NULL);
+	PHP_FE(lcd_set_autoscroll,		NULL);
+	PHP_FE(lcd_command,				NULL);
 	PHP_FE(gpio_setup,		NULL)
 	PHP_FE(gpio_output,		NULL)
 	PHP_FE(gpio_input,		NULL)
@@ -543,8 +554,7 @@ PHP_FUNCTION(lcd_begin)
 
 	lcd = new LiquidCrystal_I2C((uint8_t) addr, 16, 2, BBB_G(smbus));
 
-	lcd->begin(16, 2);
-	lcd->backlight();
+	lcd->init();
 
 	BBB_G(lcd) = lcd;
 
@@ -553,10 +563,10 @@ PHP_FUNCTION(lcd_begin)
 
 PHP_FUNCTION(lcd_print)
 {
-	LiquidCrystal_I2C *lcd = BBB_G(lcd);
 	char *str;
 	int str_len;
 
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
 	if (lcd == NULL) {
 		RETURN_NULL();
 	}
@@ -566,6 +576,220 @@ PHP_FUNCTION(lcd_print)
     }
 
 	lcd->print(str, str_len);
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_clear)
+{
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	lcd->clear();
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_home)
+{
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	lcd->home();
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_set_cursor_position)
+{
+	long col, row;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &col, &row) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	lcd->setCursor(col, row);
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_set_display)
+{
+	zend_bool on;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "b", &on) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (on) {
+		lcd->display();
+	} else {
+		lcd->noDisplay();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_set_blink)
+{
+	zend_bool on;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "b", &on) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (on) {
+		lcd->blink();
+	} else {
+		lcd->noBlink();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_set_cursor)
+{
+	zend_bool on;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "b", &on) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (on) {
+		lcd->cursor();
+	} else {
+		lcd->noCursor();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_scroll_display)
+{
+	long left_right;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &left_right) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (left_right >= 0) {
+		lcd->scrollDisplayRight();
+	} else {
+		lcd->scrollDisplayLeft();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_set_direction)
+{
+	long left_right;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &left_right) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (left_right >= 0) {
+		lcd->leftToRight();
+	} else {
+		lcd->rightToLeft();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_set_backlight)
+{
+	zend_bool on;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "b", &on) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (on) {
+		lcd->backlight();
+	} else {
+		lcd->noBacklight();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_set_autoscroll)
+{
+	zend_bool on;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "b", &on) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if (on) {
+		lcd->autoscroll();
+	} else {
+		lcd->noAutoscroll();
+	}
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_command)
+{
+	long command;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &command) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	lcd->command((uint8_t) command);
 
 	RETURN_TRUE;
 }

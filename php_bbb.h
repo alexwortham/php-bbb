@@ -72,6 +72,17 @@ PHP_FUNCTION(i2c_get_last_error);
 // LCD functions
 PHP_FUNCTION(lcd_begin);
 PHP_FUNCTION(lcd_print);
+PHP_FUNCTION(lcd_clear);
+PHP_FUNCTION(lcd_home);
+PHP_FUNCTION(lcd_set_cursor_position);
+PHP_FUNCTION(lcd_set_display);
+PHP_FUNCTION(lcd_set_blink);
+PHP_FUNCTION(lcd_set_cursor);
+PHP_FUNCTION(lcd_scroll_display);
+PHP_FUNCTION(lcd_set_direction);
+PHP_FUNCTION(lcd_set_backlight);
+PHP_FUNCTION(lcd_set_autoscroll);
+PHP_FUNCTION(lcd_command);
 // GPIO functions
 PHP_FUNCTION(gpio_setup);
 PHP_FUNCTION(gpio_output);
