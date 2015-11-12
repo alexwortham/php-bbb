@@ -151,8 +151,6 @@ ti_adc_buffer *ti_adc_buffer_init(int length, int channels) {
 		return NULL;
 	}
 
-	printf("Found iio device number: %d\n", dev_num);
-
 	buffer = (struct ti_adc_buffer *) malloc(sizeof(ti_adc_buffer));
 	buffer->num_channels = 0;
 	buffer->scan_index = 0;
@@ -172,19 +170,16 @@ ti_adc_buffer *ti_adc_buffer_init(int length, int channels) {
 		ti_adc_buffer_close(buffer);
 		return NULL;
 	}
-	printf("Found buffer directory name: %s\n", buffer->buf_dir_name);
 	ret = ti_adc_get_scan_elements_dir(buffer, dev_num);
 	if (ret < 0) {
 		ti_adc_buffer_close(buffer);
 		return NULL;
 	}
-	printf("Found scan elements directory: %s\n", buffer->scan_el_dir);
 	ret = asprintf(&buffer->dev, "/dev/iio:device%d", dev_num);
 	if (ret < 0) {
 		ti_adc_buffer_close(buffer);
 		return NULL;
 	}
-	printf("Found iio device file: %s\n", buffer->dev);
 
 	if (length > 0) {
 		buffer->buf_len = length;
@@ -192,17 +187,12 @@ ti_adc_buffer *ti_adc_buffer_init(int length, int channels) {
 		buffer->buf_len = 1024;//a sensible default
 	}
 	
-	printf("Channel mask is: %d\n", channels);
 	/* Check bitmask for channel 0 */
-	if (IS_CHAN_0_ENABLED(channels)) {
-		printf("0: %d & %d = %d\n", CHAN_0, channels, CHAN_0 & channels);
+	if (IS_CHAN_0_ENABLED(channels))
 		ti_adc_buffer_channel_enable(buffer, 0);
-	}
 	/* Check bitmask for channel 1 */
-	if (IS_CHAN_1_ENABLED(channels)) {
-		printf("l: %d & %d = %d\n", CHAN_1, channels, CHAN_1 & channels);
+	if (IS_CHAN_1_ENABLED(channels))
 		ti_adc_buffer_channel_enable(buffer, 1);
-	}
 	/* Check bitmask for channel 2 */
 	if (IS_CHAN_2_ENABLED(channels))
 		ti_adc_buffer_channel_enable(buffer, 2);
