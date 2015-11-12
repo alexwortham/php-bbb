@@ -235,7 +235,7 @@ int gpio_export(unsigned int gpio)
     close(fd);
 
     // add to list
-    new_gpio = malloc(sizeof(struct gpio_exp));
+    new_gpio = (gpio_exp *) malloc(sizeof(struct gpio_exp));
     if (new_gpio == 0)
         return -1; // out of memory
 
@@ -297,7 +297,7 @@ int add_fd_list(unsigned int gpio, int fd)
 {
     struct fdx *new_fd;
 
-    new_fd = malloc(sizeof(struct fdx));
+    new_fd = (fdx *) malloc(sizeof(struct fdx));
     if (new_fd == 0)
         return -1;  // out of memory
 

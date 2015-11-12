@@ -41,6 +41,7 @@ extern zend_module_entry bbb_module_entry;
 #include "i2clib.h"
 #include "adclib.h"
 #include "gpiolib.h"
+#include "LiquidCrystal_I2C.h"
 
 PHP_MINIT_FUNCTION(bbb);
 PHP_MSHUTDOWN_FUNCTION(bbb);
@@ -68,6 +69,9 @@ PHP_FUNCTION(i2c_write_byte_data);
 PHP_FUNCTION(i2c_read_word_data);
 PHP_FUNCTION(i2c_write_word_data);
 PHP_FUNCTION(i2c_get_last_error);
+// LCD functions
+PHP_FUNCTION(lcd_begin);
+PHP_FUNCTION(lcd_print);
 // GPIO functions
 PHP_FUNCTION(gpio_setup);
 PHP_FUNCTION(gpio_output);
@@ -93,6 +97,7 @@ ZEND_BEGIN_MODULE_GLOBALS(bbb)
 	ti_adc_buffer 	*buffer;
 	SMBus		*smbus;
 	ADC		*adc;
+    LiquidCrystal_I2C *lcd;
 	
 ZEND_END_MODULE_GLOBALS(bbb)
 

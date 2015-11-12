@@ -58,6 +58,8 @@ const zend_function_entry bbb_functions[] = {
 	PHP_FE(i2c_read_word_data,	NULL)
 	PHP_FE(i2c_write_word_data,	NULL)
 	PHP_FE(i2c_get_last_error,	NULL)
+	PHP_FE(lcd_begin,			NULL)
+	PHP_FE(lcd_print,			NULL)
 	PHP_FE(gpio_setup,		NULL)
 	PHP_FE(gpio_output,		NULL)
 	PHP_FE(gpio_input,		NULL)
@@ -116,6 +118,7 @@ static void php_bbb_init_globals(zend_bbb_globals *bbb_globals)
 	for (i=0; i<120; i++) {
 		bbb_globals->gpio_direction[i] = -1;
 	}
+	bbb_globals->lcd = NULL;
 }
 /* }}} */
 
@@ -325,7 +328,7 @@ PHP_FUNCTION(adc_buffer_read)
 
 	ALLOC_INIT_ZVAL(array);
 	array_init(array);
-	zval **channel = emalloc(sizeof(zval *) * buff->num_channels);
+	zval **channel = (zval **) emalloc(sizeof(zval *) * buff->num_channels);
 	for (i = 0; i < buff->num_channels; i++) {
 		ALLOC_INIT_ZVAL(channel[i]);
 		array_init(channel[i]);
@@ -521,6 +524,50 @@ PHP_FUNCTION(i2c_get_last_error)
 	SMBus_ASSERT_OPEN();
 
 	RETURN_STRING(SMBus_get_last_error(BBB_G(smbus)), 1);
+}
+
+PHP_FUNCTION(lcd_begin)
+{
+	SMBus_ASSERT_OPEN();
+	long addr;
+
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+
+	if (lcd != NULL) {
+		RETURN_TRUE;
+	}
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &addr) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	lcd = new LiquidCrystal_I2C((uint8_t) addr, 16, 2, BBB_G(smbus));
+
+	lcd->begin(16, 2);
+	lcd->backlight();
+
+	BBB_G(lcd) = lcd;
+
+	RETURN_TRUE;
+}
+
+PHP_FUNCTION(lcd_print)
+{
+	LiquidCrystal_I2C *lcd = BBB_G(lcd);
+	char *str;
+	int str_len;
+
+	if (lcd == NULL) {
+		RETURN_NULL();
+	}
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) == FAILURE) {
+		RETURN_NULL();
+    }
+
+	lcd->print(str, str_len);
+
+	RETURN_TRUE;
 }
 
 PHP_FUNCTION(gpio_setup)

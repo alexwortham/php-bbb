@@ -16,12 +16,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+#ifndef i2clib_h
+#define i2clib_h
+
 //#include "structmember.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <linux/i2c-dev.h>
+
+#ifdef __cplusplus
+#include <unistd.h>
+extern "C" {
+#endif
 
 /*
 ** These are required to build this module against Linux older than 2.6.23.
@@ -57,7 +65,7 @@ typedef struct {
 
 static void
 SMBus_add_block_data(SMBus *self, long data) {
-	SMBus_block_node *new_node = malloc(sizeof(SMBus_block_node));
+	SMBus_block_node *new_node = (SMBus_block_node *) malloc(sizeof(SMBus_block_node));
 	new_node->value = data;
 	new_node->next = NULL;
 	new_node->prev = NULL;
@@ -138,12 +146,12 @@ SMBus_get_last_error(SMBus *self) {
 static SMBus *
 SMBus_new()
 {
-	SMBus *self = malloc(sizeof(SMBus));
+	SMBus *self = (SMBus *) malloc(sizeof(SMBus));
 
 	self->fd = -1;
 	self->addr = -1;
 	self->pec = 0;
-	self->last_error = malloc(MAX_ERR_LEN);
+	self->last_error = (char *) malloc(MAX_ERR_LEN);
 
 	return (SMBus *)self;
 }
@@ -525,3 +533,9 @@ SMBus_set_pec(SMBus *self, int pec)
 
 	return 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

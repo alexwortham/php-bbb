@@ -43,12 +43,12 @@ const char *adc_dir_format = "%siio:device%d/in_voltage%d_raw";
 
 ADC *
 ADC_new(void) {
-	ADC *adc = malloc(sizeof(ADC));
+	ADC *adc = (ADC *) malloc(sizeof(ADC));
 	adc->adc_initialized = 0;
 	adc->module_setup = 0;
 	adc->setup_error = 0;
     	int dev_num = find_type_by_name(ADC_DEVICE_NAME, "iio:device");
-	adc->ain_files = malloc( NUM_CHANNELS * PTR_SIZE );
+	adc->ain_files = (char **) malloc( NUM_CHANNELS * PTR_SIZE );
 	int i;
 	for (i = 0; i < NUM_CHANNELS; i++) {
     		asprintf(&adc->ain_files[i], adc_dir_format, iio_dir, dev_num, i);
