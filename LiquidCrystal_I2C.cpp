@@ -48,12 +48,9 @@ void LiquidCrystal_I2C::delay(unsigned long millis) {
 }
 
 void LiquidCrystal_I2C::delayMicroseconds(unsigned long micros) {
-	timespec req, rem;
-	req.tv_sec = 0;
-	req.tv_nsec = (long) (micros * 1000);
 
 	// Not going to worry about signals causing early return for now
-	nanosleep(&req, &rem);
+	usleep(micros);
 }
 
 void LiquidCrystal_I2C::begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
@@ -239,8 +236,12 @@ size_t LiquidCrystal_I2C::print(const char *str, size_t size) {
 
 size_t LiquidCrystal_I2C::print(const uint8_t *str, size_t size) {
 	size_t n = 0;
+	char c;
 	while (size--) {
-		if (write(*str++)) n++;
+		c = (char) *str++;
+		if (write((uint8_t) c) == 0) {
+			n++;
+		}
 		else break;
 	}
 	return n;
