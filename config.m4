@@ -61,5 +61,5 @@ if test "$PHP_BBB" != "no"; then
   PHP_REQUIRE_CXX()
   PHP_SUBST(BBB_SHARED_LIBADD)
   PHP_ADD_LIBRARY(stdc++, 1, BBB_SHARED_LIBADD)
-  PHP_NEW_EXTENSION(bbb, bbb.cpp iio_utils.c ti_am335x_adc_buffer.c LiquidCrystal_I2C.cpp, $ext_shared)
+  PHP_NEW_EXTENSION(bbb, bbb.cpp iio_utils.cpp ti_am335x_adc_buffer.cpp LiquidCrystal_I2C.cpp, $ext_shared)
 fi

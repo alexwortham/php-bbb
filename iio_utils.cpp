@@ -309,7 +309,7 @@ int build_channel_array(const char *device_dir,
 			fclose(sysfsfp);
 			free(filename);
 		}
-	*ci_array = malloc(sizeof(**ci_array) * (*counter));
+	*ci_array = (iio_channel_info*) malloc(sizeof(**ci_array) * (*counter));
 	if (*ci_array == NULL) {
 		ret = -ENOMEM;
 		goto error_close_dir;
@@ -455,7 +455,7 @@ int find_type_by_name(const char *name, const char *type)
 			if (strncmp(ent->d_name + strlen(type) + numstrlen,
 					":",
 					1) != 0) {
-				filename = malloc(strlen(iio_dir)
+				filename = (char *) malloc(strlen(iio_dir)
 						+ strlen(type)
 						+ numstrlen
 						+ 6);
@@ -491,7 +491,7 @@ int _write_sysfs_int(char *filename, char *basedir, int val, int verify)
 	int ret = 0;
 	FILE *sysfsfp;
 	int test;
-	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
+	char *temp = (char *) malloc(strlen(basedir) + strlen(filename) + 2);
 
 	if (temp == NULL)
 		return -ENOMEM;
@@ -540,7 +540,7 @@ int _write_sysfs_string(char *filename, char *basedir, char *val, int verify)
 {
 	int ret = 0;
 	FILE  *sysfsfp;
-	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
+	char *temp = (char *) malloc(strlen(basedir) + strlen(filename) + 2);
 
 	if (temp == NULL) {
 		printf("Memory allocation failed\n");
@@ -601,7 +601,7 @@ int read_sysfs_posint(char *filename, char *basedir)
 {
 	int ret;
 	FILE  *sysfsfp;
-	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
+	char *temp = (char *) malloc(strlen(basedir) + strlen(filename) + 2);
 
 	if (temp == NULL) {
 		printf("Memory allocation failed");
@@ -624,7 +624,7 @@ int read_sysfs_float(char *filename, char *basedir, float *val)
 {
 	int ret = 0;
 	FILE  *sysfsfp;
-	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
+	char *temp = (char *) malloc(strlen(basedir) + strlen(filename) + 2);
 
 	if (temp == NULL) {
 		printf("Memory allocation failed");
@@ -647,7 +647,7 @@ int read_sysfs_string(const char *filename, const char *basedir, char *str)
 {
 	int ret = 0;
 	FILE  *sysfsfp;
-	char *temp = malloc(strlen(basedir) + strlen(filename) + 2);
+	char *temp = (char *) malloc(strlen(basedir) + strlen(filename) + 2);
 
 	if (temp == NULL) {
 		printf("Memory allocation failed");

@@ -232,7 +232,7 @@ ti_adc_buffer *ti_adc_buffer_init(int length, int channels) {
 		return NULL;
 	}
 	buffer->scan_size = ti_adc_size_from_channelarray(buffer->channels, buffer->num_channels);
-	buffer->data = malloc(buffer->scan_size * buffer->buf_len);
+	buffer->data = (char *) malloc(buffer->scan_size * buffer->buf_len);
 	if (!buffer->data) {
 		printf("Could not allocate memory for buffer data.\n");
 		ti_adc_buffer_close(buffer);

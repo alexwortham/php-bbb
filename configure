@@ -4651,7 +4651,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
   old_IFS=$IFS
-  for ac_src in bbb.cpp iio_utils.c ti_am335x_adc_buffer.c LiquidCrystal_I2C.cpp; do
+  for ac_src in bbb.cpp iio_utils.cpp ti_am335x_adc_buffer.cpp LiquidCrystal_I2C.cpp; do
 
       IFS=.
       set $ac_src
@@ -4700,7 +4700,7 @@ EOF
 
 
   old_IFS=$IFS
-  for ac_src in bbb.cpp iio_utils.c ti_am335x_adc_buffer.c LiquidCrystal_I2C.cpp; do
+  for ac_src in bbb.cpp iio_utils.cpp ti_am335x_adc_buffer.cpp LiquidCrystal_I2C.cpp; do
 
       IFS=.
       set $ac_src
@@ -4830,7 +4830,7 @@ _ACEOF
 
 
   old_IFS=$IFS
-  for ac_src in bbb.cpp iio_utils.c ti_am335x_adc_buffer.c LiquidCrystal_I2C.cpp; do
+  for ac_src in bbb.cpp iio_utils.cpp ti_am335x_adc_buffer.cpp LiquidCrystal_I2C.cpp; do
 
       IFS=.
       set $ac_src
@@ -4876,7 +4876,7 @@ EOF
 
 
   old_IFS=$IFS
-  for ac_src in bbb.cpp iio_utils.c ti_am335x_adc_buffer.c LiquidCrystal_I2C.cpp; do
+  for ac_src in bbb.cpp iio_utils.cpp ti_am335x_adc_buffer.cpp LiquidCrystal_I2C.cpp; do
 
       IFS=.
       set $ac_src
